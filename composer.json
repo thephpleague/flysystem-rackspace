@@ -1,0 +1,35 @@
+{
+    "name": "league/flysystem-replicate-adapter",
+    "description": "Flysystem adapter for Replica's",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Frank de Jonge",
+            "email": "info@frenky.net"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "league/flysystem": "~1.0@dev",
+        "rackspace/php-opencloud": "~1.12"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.0",
+        "mockery/mockery": "0.9.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "League\\Flysystem\\Rackspace\\": "src/"
+        }
+    },
+    "config": {
+        "bin-dir": "bin"
+    },
+    "min-stability": "dev",
+    "prefer-stable": true,
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    }
+}
