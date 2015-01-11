@@ -1,6 +1,6 @@
 {
-    "name": "league/flysystem-replicate-adapter",
-    "description": "Flysystem adapter for Replica's",
+    "name": "league/flysystem-rackspace",
+    "description": "Flysystem adapter for Rackspace",
     "license": "MIT",
     "authors": [
         {
