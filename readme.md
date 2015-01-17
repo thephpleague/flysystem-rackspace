@@ -12,7 +12,7 @@
 ## Installation
 
 ```bash
-composer require league\flysystem-rackspace
+composer require league/flysystem-rackspace
 ```
 
 ## Usage
