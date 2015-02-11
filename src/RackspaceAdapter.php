@@ -11,6 +11,7 @@ use League\Flysystem\Util;
 use OpenCloud\ObjectStore\Exception\ObjectNotFoundException;
 use OpenCloud\ObjectStore\Resource\Container;
 use OpenCloud\ObjectStore\Resource\DataObject;
+use OpenCloud\ObjectStore\Constants\UrlType;
 
 class RackspaceAdapter extends AbstractAdapter
 {
@@ -239,6 +240,18 @@ class RackspaceAdapter extends AbstractAdapter
         $name = $this->removePathPrefix($name);
         $mimetype = explode('; ', $object->getContentType());
 
+        $publicUrl = '';
+        $secureUrl = '';
+        $streamingUrl = '';
+        $iosStreamingUrl = '';
+
+        if ($this->container->isCdnEnabled()) {
+            $publicUrl = $object->getPublicUrl();
+            $secureUrl = $object->getPublicUrl(UrlType::SSL);
+            $streamingUrl = $object->getPublicUrl(UrlType::STREAMING);
+            $iosStreamingUrl = $object->getPublicUrl(UrlType::IOS_STREAMING);
+        }
+
         return [
             'type' => 'file',
             'dirname' => Util::dirname($name),
@@ -246,6 +259,10 @@ class RackspaceAdapter extends AbstractAdapter
             'timestamp' => strtotime($object->getLastModified()),
             'mimetype' => reset($mimetype),
             'size' => $object->getContentLength(),
+            'http_url' => (string) $publicUrl,
+            'https_url' => (string) $secureUrl,
+            'streaming_url' => (string) $streamingUrl,
+            'ios_streaming_url' => (string) $iosStreamingUrl
         ];
     }
 
