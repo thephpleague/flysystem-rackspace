@@ -240,12 +240,12 @@ class RackspaceAdapter extends AbstractAdapter
         $mimetype = explode('; ', $object->getContentType());
 
         return [
-            'type' => 'file',
-            'dirname' => Util::dirname($name),
-            'path' => $name,
+            'type'      => 'file',
+            'dirname'   => Util::dirname($name),
+            'path'      => $name,
             'timestamp' => strtotime($object->getLastModified()),
-            'mimetype' => reset($mimetype),
-            'size' => $object->getContentLength(),
+            'mimetype'  => reset($mimetype),
+            'size'      => $object->getContentLength(),
         ];
     }
 

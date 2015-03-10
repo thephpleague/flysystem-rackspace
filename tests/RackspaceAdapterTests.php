@@ -1,7 +1,7 @@
 <?php
 
-use League\Flysystem\Rackspace\RackspaceAdapter as Rackspace;
 use League\Flysystem\Config;
+use League\Flysystem\Rackspace\RackspaceAdapter as Rackspace;
 
 class RackspaceTests extends PHPUnit_Framework_TestCase
 {
