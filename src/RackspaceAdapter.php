@@ -230,11 +230,11 @@ class RackspaceAdapter extends AbstractAdapter
             $partialResponse = iterator_to_array($partialResponse);
             $last = end($partialResponse);
             if ($last) {
-			$marker = $last->getName();
-    		} else {
-    			$marker = null;
-    		}
-    		$response = array_merge($response, $partialResponse);
+                $marker = $last->getName();
+            } else {
+                $marker = null;
+            }
+            $response = array_merge($response, $partialResponse);
         }
         $contents = array_map([$this, 'normalizeObject'], $response);
 
