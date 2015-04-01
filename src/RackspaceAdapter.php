@@ -222,12 +222,20 @@ class RackspaceAdapter extends AbstractAdapter
      */
     public function listContents($directory = '', $recursive = false)
     {
+        $response = [];
         $location = $this->applyPathPrefix($directory);
-        $response = $this->container->objectList(['prefix' => $location]);
-        $response = iterator_to_array($response);
-        $contents = array_map([$this, 'normalizeObject'], $response);
 
-        return Util::emulateDirectories($contents);
+        while(true) {
+            $objectList = $this->container->objectList(['prefix' => $location]);
+
+            if ($objectList->count() === 0) {
+                break;
+            }
+
+            $response = array_merge($response, iterator_to_array($objectList));
+        }
+
+        return Util::emulateDirectories(array_map([$this, 'normalizeObject'], $response));
     }
 
     /**
