@@ -8,6 +8,7 @@ use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
 use League\Flysystem\Adapter\Polyfill\StreamedCopyTrait;
 use League\Flysystem\Config;
 use League\Flysystem\Util;
+use OpenCloud\ObjectStore\Constants\UrlType;
 use OpenCloud\ObjectStore\Exception\ObjectNotFoundException;
 use OpenCloud\ObjectStore\Resource\Container;
 use OpenCloud\ObjectStore\Resource\DataObject;
@@ -296,10 +297,11 @@ class RackspaceAdapter extends AbstractAdapter
 
     /**
      * @param $path
+     * @param string $type
      * @return string
      */
-    public function getUrl($path)
+    public function getUrl($path, $type = UrlType::CDN)
     {
-        return (string) $this->getObject($path)->getUrl();
+        return (string)$this->getObject($path)->getPublicUrl($type);
     }
 }
