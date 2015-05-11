@@ -292,4 +292,14 @@ class RackspaceAdapter extends AbstractAdapter
     {
         return $this->getMetadata($path);
     }
+
+
+    /**
+     * @param $path
+     * @return string
+     */
+    public function getUrl($path)
+    {
+        return (string) $this->getObject($path)->getUrl();
+    }
 }
