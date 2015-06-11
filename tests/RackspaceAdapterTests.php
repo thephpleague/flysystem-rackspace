@@ -273,4 +273,11 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $adapter = new Rackspace($container);
         $this->assertInternalType('array', $adapter->listContents('', true));
     }
+
+    public function testGetContainer() {
+      $container = $this->getContainerMock();
+      $adapter = new Rackspace($container);
+
+      $this->assertEquals($container, $adapter->getContainer());
+    }
 }

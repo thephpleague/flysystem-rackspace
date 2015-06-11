@@ -41,6 +41,16 @@ class RackspaceAdapter extends AbstractAdapter
     }
 
     /**
+     * Get the container.
+     *
+     * @return Container
+     */
+    public function getContainer()
+    {
+        return $this->container;
+    }
+
+    /**
      * Get an object.
      *
      * @param string $path
