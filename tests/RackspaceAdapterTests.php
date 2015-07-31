@@ -64,15 +64,15 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $container = $this->getContainerMock();
         $dataObject = $this->getDataObjectMock('filename.ext');
 
-        $container->shouldReceive('getObject')->andReturn($dataObject);
+        $container->shouldReceive('objectExists')->andReturn(true);
         $adapter = new Rackspace($container);
-        $this->assertInternalType('array', $adapter->has('filename.ext'));
+        $this->assertTrue($adapter->has('filename.ext'));
     }
 
     public function testHasFail()
     {
         $container = $this->getContainerMock();
-        $container->shouldReceive('getObject')->andThrow('Guzzle\Http\Exception\ClientErrorResponseException');
+        $container->shouldReceive('objectExists')->andThrow('Guzzle\Http\Exception\ClientErrorResponseException');
         $adapter = new Rackspace($container);
         $this->assertFalse($adapter->has('filename.ext'));
     }
@@ -80,7 +80,7 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
     public function testHasNotFound()
     {
         $container = $this->getContainerMock();
-        $container->shouldReceive('getObject')->andThrow('OpenCloud\ObjectStore\Exception\ObjectNotFoundException');
+        $container->shouldReceive('objectExists')->andReturn(false);
         $adapter = new Rackspace($container);
         $this->assertFalse($adapter->has('filename.ext'));
     }

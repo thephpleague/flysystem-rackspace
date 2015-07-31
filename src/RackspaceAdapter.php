@@ -191,14 +191,13 @@ class RackspaceAdapter extends AbstractAdapter
     public function has($path)
     {
         try {
-            $object = $this->getObject($path);
+            $location = $this->applyPathPrefix($path);
+            $exists = $this->container->objectExists($location);
         } catch (ClientErrorResponseException $e) {
-            return false;
-        } catch (ObjectNotFoundException $e) {
             return false;
         }
 
-        return $this->normalizeObject($object);
+        return $exists;
     }
 
     /**
