@@ -62,8 +62,6 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
     public function testHas()
     {
         $container = $this->getContainerMock();
-        $dataObject = $this->getDataObjectMock('filename.ext');
-
         $container->shouldReceive('objectExists')->andReturn(true);
         $adapter = new Rackspace($container);
         $this->assertTrue($adapter->has('filename.ext'));
