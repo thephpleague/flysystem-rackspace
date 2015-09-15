@@ -110,7 +110,10 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $container->shouldReceive('uploadObject')->andReturn($dataObject);
         $adapter = new Rackspace($container);
         $config = new Config([]);
-        $this->assertInternalType('array', $adapter->writeStream('filename.ext', 'content', $config));
+        $stream = tmpfile();
+        fwrite($stream, 'something');
+        $this->assertInternalType('array', $adapter->writeStream('filename.ext', $stream, $config));
+        fclose($stream);
     }
 
     public function testUpdateFail()
@@ -149,6 +152,7 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $adapter = new Rackspace($container);
         $resource = tmpfile();
         $this->assertInternalType('array', $adapter->updateStream('filename.ext', $resource, new Config()));
+        fclose($resource);
     }
 
     public function testCreateDir()
@@ -272,10 +276,11 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $this->assertInternalType('array', $adapter->listContents('', true));
     }
 
-    public function testGetContainer() {
-      $container = $this->getContainerMock();
-      $adapter = new Rackspace($container);
+    public function testGetContainer()
+    {
+        $container = $this->getContainerMock();
+        $adapter = new Rackspace($container);
 
-      $this->assertEquals($container, $adapter->getContainer());
+        $this->assertEquals($container, $adapter->getContainer());
     }
 }
