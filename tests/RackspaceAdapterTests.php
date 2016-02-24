@@ -183,32 +183,18 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $this->assertInternalType('array', $adapter->{$function}('filename.ext'));
     }
 
-    public function deleteProvider()
-    {
-        return [
-            [204, true],
-            [500, false],
-        ];
-    }
-
-    /**
-     * @dataProvider  deleteProvider
-     */
-    public function testDelete($status, $expected)
+    public function testDelete()
     {
         $container = $this->getContainerMock();
-        $dataObject = Mockery::mock('OpenCloud\ObjectStore\Resource\DataObject');
-        $dataObject->shouldReceive('delete')->andReturn(Mockery::self());
-        $dataObject->shouldReceive('getStatusCode')->andReturn($status);
-        $container->shouldReceive('getObject')->andReturn($dataObject);
+        $container->shouldReceive('deleteObject');
         $adapter = new Rackspace($container);
-        $this->assertEquals($expected, $adapter->delete('filename.ext'));
+        $this->assertTrue($adapter->delete('filename.ext'));
     }
 
     public function testDeleteNotFound()
     {
         $container = $this->getContainerMock();
-        $container->shouldReceive('getObject')->andThrow('OpenCloud\ObjectStore\Exception\ObjectNotFoundException');
+        $container->shouldReceive('deleteObject')->andThrow('Guzzle\Http\Exception\BadResponseException');
         $adapter = new Rackspace($container);
         $this->assertFalse($adapter->delete('filename.txt'));
     }

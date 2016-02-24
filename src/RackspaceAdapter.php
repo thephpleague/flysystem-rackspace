@@ -2,13 +2,13 @@
 
 namespace League\Flysystem\Rackspace;
 
+use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\Exception\ClientErrorResponseException;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
 use League\Flysystem\Adapter\Polyfill\StreamedCopyTrait;
 use League\Flysystem\Config;
 use League\Flysystem\Util;
-use OpenCloud\ObjectStore\Exception\ObjectNotFoundException;
 use OpenCloud\ObjectStore\Resource\Container;
 use OpenCloud\ObjectStore\Resource\DataObject;
 
@@ -123,14 +123,10 @@ class RackspaceAdapter extends AbstractAdapter
     public function delete($path)
     {
         try {
-            $object = $this->getObject($path);
-        } catch (ObjectNotFoundException $exception) {
-            return false;
-        }
+            $location = $this->applyPathPrefix($path);
 
-        $response = $object->delete();
-
-        if ($response->getStatusCode() !== 204) {
+            $this->container->deleteObject($location);
+        } catch (BadResponseException $exception) {
             return false;
         }
 
