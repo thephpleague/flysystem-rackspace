@@ -159,7 +159,7 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
     {
         $container = $this->getContainerMock();
         $adapter = new Rackspace($container);
-        $this->assertTrue($adapter->createDir('dirname', new Config()));
+        $this->assertTrue($adapter->createDir('dirname', '', new Config()));
     }
 
     public function getterProvider()
