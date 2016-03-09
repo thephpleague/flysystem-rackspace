@@ -168,10 +168,6 @@ class RackspaceAdapter extends AbstractAdapter
             $headers = $config->get('headers');
         }
 
-        if (!key_exists('Contents', $headers)) {
-            $headers['Contents'] = 'None';
-        }
-
         if (!key_exists('Content-Type', $headers)) {
             $headers['Content-Type'] = 'application/directory';
         }
