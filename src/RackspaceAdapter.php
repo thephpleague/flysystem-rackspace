@@ -162,11 +162,7 @@ class RackspaceAdapter extends AbstractAdapter
      */
     public function createDir($dirname, Config $config)
     {
-        $headers = [];
-
-        if ($config->has('headers')) {
-            $headers = $config->get('headers');
-        }
+        $headers = $config->get('headers', []);
 
         if (!key_exists('Content-Type', $headers)) {
             $headers['Content-Type'] = 'application/directory';
