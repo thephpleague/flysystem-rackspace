@@ -178,7 +178,7 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
     {
         $container = $this->getContainerMock();
         $dataObject = $this->getDataObjectMock('filename.ext');
-        $container->shouldReceive('getObject')->andReturn($dataObject);
+        $container->shouldReceive('getPartialObject')->andReturn($dataObject);
         $adapter = new Rackspace($container);
         $this->assertInternalType('array', $adapter->{$function}('filename.ext'));
     }

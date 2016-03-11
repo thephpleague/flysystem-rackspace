@@ -65,6 +65,20 @@ class RackspaceAdapter extends AbstractAdapter
     }
 
     /**
+     * Get the metadata of an object.
+     *
+     * @param string $path
+     *
+     * @return DataObject
+     */
+    protected function getPartialObject($path)
+    {
+        $location = $this->applyPathPrefix($path);
+
+        return $this->container->getPartialObject($location);
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function write($path, $contents, Config $config)
@@ -270,7 +284,7 @@ class RackspaceAdapter extends AbstractAdapter
      */
     public function getMetadata($path)
     {
-        $object = $this->getObject($path);
+        $object = $this->getPartialObject($path);
 
         return $this->normalizeObject($object);
     }
