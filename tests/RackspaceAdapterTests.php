@@ -158,8 +158,17 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
     public function testCreateDir()
     {
         $container = $this->getContainerMock();
+        $dataObject = $this->getDataObjectMock('dirname');
+        $container->shouldReceive('uploadObject')->with(
+            'dirname',
+            '',
+            ['Content-Type' => 'application/directory']
+        )->andReturn($dataObject);
+
         $adapter = new Rackspace($container);
-        $this->assertInternalType('array', $adapter->createDir('dirname', new Config()));
+        $response = $adapter->createDir('dirname', new Config());
+        $this->assertInternalType('array', $response);
+        $this->assertEquals('dirname', $response['path']);
     }
 
     public function getterProvider()

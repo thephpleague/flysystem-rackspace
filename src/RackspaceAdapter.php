@@ -176,7 +176,12 @@ class RackspaceAdapter extends AbstractAdapter
      */
     public function createDir($dirname, Config $config)
     {
-        return ['path' => $dirname];
+        $headers = $config->get('headers', []);
+        $headers['Content-Type'] = 'application/directory';
+        $extendedConfig = (new Config())->setFallback($config);
+        $extendedConfig->set('headers', $headers);
+
+        return $this->write($dirname, '', $extendedConfig);
     }
 
     /**
@@ -270,7 +275,7 @@ class RackspaceAdapter extends AbstractAdapter
         $mimetype = explode('; ', $object->getContentType());
 
         return [
-            'type'      => 'file',
+            'type'      => ((in_array('application/directory', $mimetype)) ? 'dir' : 'file'),
             'dirname'   => Util::dirname($name),
             'path'      => $name,
             'timestamp' => strtotime($object->getLastModified()),
