@@ -325,7 +325,7 @@ class RackspaceAdapter extends AbstractAdapter
      */
     public function applyPathPrefix($path)
     {
-        $encodedPath = join('/', array_map('urlencode', explode('/', $path)));
+        $encodedPath = join('/', array_map('rawurlencode', explode('/', $path)));
 
         return parent::applyPathPrefix($encodedPath);
     }
