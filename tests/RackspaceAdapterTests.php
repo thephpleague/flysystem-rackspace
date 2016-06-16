@@ -35,16 +35,16 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
     {
         $resource = tmpfile();
         $container = $this->getContainerMock();
-        $dataObject = $this->getDataObjectMock('filename.ext');
+        $dataObject = $this->getDataObjectMock('some+directory/filename.ext');
         $body = Mockery::mock('Guzzle\Http\EntityBody');
         $body->shouldReceive('close');
         $body->shouldReceive('rewind');
         $body->shouldReceive('getStream')->andReturn($resource);
         $body->shouldReceive('detachStream');
         $dataObject->shouldReceive('getContent')->andReturn($body);
-        $container->shouldReceive('getObject')->andReturn($dataObject);
+        $container->shouldReceive('getObject')->with('some+directory/filename.ext')->andReturn($dataObject);
         $adapter = new Rackspace($container);
-        $response = $adapter->readStream('filename.ext');
+        $response = $adapter->readStream('some directory/filename.ext');
         $this->assertInternalType('array', $response);
         $this->assertEquals($resource, $response['stream']);
         fclose($resource);

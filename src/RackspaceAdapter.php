@@ -317,4 +317,18 @@ class RackspaceAdapter extends AbstractAdapter
     {
         return $this->getMetadata($path);
     }
+
+    /**
+     * @param string $path
+     *
+     * @return string
+     */
+    public function applyPathPrefix($path)
+    {
+        $encodedPath = join('/', array_map('urlencode', explode('/', $path)));
+
+        return parent::applyPathPrefix($encodedPath);
+    }
+
+
 }
