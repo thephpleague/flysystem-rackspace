@@ -38,6 +38,7 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $dataObject = $this->getDataObjectMock('filename.ext');
         $body = Mockery::mock('Guzzle\Http\EntityBody');
         $body->shouldReceive('close');
+        $body->shouldReceive('rewind');
         $body->shouldReceive('getStream')->andReturn($resource);
         $body->shouldReceive('detachStream');
         $dataObject->shouldReceive('getContent')->andReturn($body);

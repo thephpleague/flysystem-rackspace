@@ -235,8 +235,8 @@ class RackspaceAdapter extends AbstractAdapter
         $object = $this->getObject($path);
         $data = $this->normalizeObject($object);
         $responseBody = $object->getContent();
+        $responseBody->rewind();
         $data['stream'] = $responseBody->getStream();
-        rewind($data['stream']);
         $responseBody->detachStream();
 
         return $data;
