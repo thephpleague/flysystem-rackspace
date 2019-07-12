@@ -279,4 +279,36 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
 
         $this->assertEquals($container, $adapter->getContainer());
     }
+
+    public function testUpdateWithUnrecognizedEtagHeader()
+    {
+        $container = $this->getContainerMock();
+        $dataObject = $this->getDataObjectMock('filename.ext');
+        $dataObject->shouldReceive('setContent');
+        $dataObject->shouldReceive('setEtag')->times(1);
+        $dataObject->shouldReceive('update')->andReturn(Mockery::self());
+        $container->shouldReceive('getObject')->andReturn($dataObject);
+        $adapter = new Rackspace($container);
+        $this->assertInternalType('array', $adapter->update('filename.ext', 'content', new Config([
+            'headers' => [
+                'etagg' => 'FOOBAR',
+            ],
+        ])));
+    }
+
+    public function testUpdateWithEtagHeader()
+    {
+        $container = $this->getContainerMock();
+        $dataObject = $this->getDataObjectMock('filename.ext');
+        $dataObject->shouldReceive('setContent');
+        $dataObject->shouldReceive('setEtag')->times(2);
+        $dataObject->shouldReceive('update')->andReturn(Mockery::self());
+        $container->shouldReceive('getObject')->andReturn($dataObject);
+        $adapter = new Rackspace($container);
+        $this->assertInternalType('array', $adapter->update('filename.ext', 'content', new Config([
+            'headers' => [
+                'etag' => 'FOOBAR',
+            ],
+        ])));
+    }
 }

@@ -103,6 +103,16 @@ class RackspaceAdapter extends AbstractAdapter
         $object = $this->getObject($path);
         $object->setContent($contents);
         $object->setEtag(null);
+
+        if ($config && $config->has('headers')) {
+            $headers =  $config->get('headers');
+            if (isset($headers['etag'])) {
+                $object->setEtag($headers['etag']);
+            } elseif (isset($headers['ETag'])) {
+                $object->setEtag($headers['ETag']);
+            }
+        }
+        
         $response = $object->update();
 
         if (! $response->getLastModified()) {
