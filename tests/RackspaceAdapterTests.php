@@ -1,7 +1,11 @@
 <?php
 
+namespace League\Flysystem\Rackspace\Tests;
+
+use ArrayIterator;
 use League\Flysystem\Config;
 use League\Flysystem\Rackspace\RackspaceAdapter as Rackspace;
+use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 

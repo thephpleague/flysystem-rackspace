@@ -22,6 +22,11 @@
             "League\\Flysystem\\Rackspace\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "League\\Flysystem\\Rackspace\\Tests\\": "tests/"
+        }
+    },
     "config": {
         "bin-dir": "bin"
     },
