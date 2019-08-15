@@ -2,15 +2,23 @@
 
 use League\Flysystem\Config;
 use League\Flysystem\Rackspace\RackspaceAdapter as Rackspace;
+use Mockery\MockInterface;
+use PHPUnit\Framework\TestCase;
 
-class RackspaceTests extends PHPUnit_Framework_TestCase
+class RackspaceTests extends TestCase
 {
-    public function getContainerMock()
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
+    }
+
+    public function getContainerMock(): MockInterface
     {
         return Mockery::mock('OpenCloud\ObjectStore\Resource\Container');
     }
 
-    public function getDataObjectMock($filename)
+    public function getDataObjectMock($filename): MockInterface
     {
         $mock = Mockery::mock('OpenCloud\ObjectStore\Resource\DataObject');
         $mock->shouldReceive('getName')->andReturn($filename);
@@ -21,17 +29,17 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         return $mock;
     }
 
-    public function testRead()
+    public function testRead(): void
     {
         $container = $this->getContainerMock();
         $dataObject = $this->getDataObjectMock('filename.ext');
         $dataObject->shouldReceive('getContent')->andReturn('file contents');
         $container->shouldReceive('getObject')->andReturn($dataObject);
         $adapter = new Rackspace($container);
-        $this->assertInternalType('array', $adapter->read('filename.ext'));
+        $this->assertIsArray($adapter->read('filename.ext'));
     }
 
-    public function testReadStream()
+    public function testReadStream(): void
     {
         $resource = tmpfile();
         $container = $this->getContainerMock();
@@ -45,22 +53,22 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $container->shouldReceive('getObject')->with('some%20directory/filename.ext')->andReturn($dataObject);
         $adapter = new Rackspace($container);
         $response = $adapter->readStream('some directory/filename.ext');
-        $this->assertInternalType('array', $response);
+        $this->assertIsArray($response);
         $this->assertEquals($resource, $response['stream']);
         fclose($resource);
     }
 
-    public function testPrefixed()
+    public function testPrefixed(): void
     {
         $container = $this->getContainerMock();
         $dataObject = $this->getDataObjectMock('prefix/filename.ext');
         $dataObject->shouldReceive('getContent')->andReturn('file contents');
         $container->shouldReceive('getObject')->andReturn($dataObject);
         $adapter = new Rackspace($container, 'prefix');
-        $this->assertInternalType('array', $adapter->read('filename.ext'));
+        $this->assertIsArray($adapter->read('filename.ext'));
     }
 
-    public function testHas()
+    public function testHas(): void
     {
         $container = $this->getContainerMock();
         $container->shouldReceive('objectExists')->andReturn(true);
@@ -68,7 +76,7 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $this->assertTrue($adapter->has('filename.ext'));
     }
 
-    public function testHasFail()
+    public function testHasFail(): void
     {
         $container = $this->getContainerMock();
         $container->shouldReceive('objectExists')->andThrow('Guzzle\Http\Exception\ClientErrorResponseException');
@@ -76,7 +84,7 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $this->assertFalse($adapter->has('filename.ext'));
     }
 
-    public function testHasNotFound()
+    public function testHasNotFound(): void
     {
         $container = $this->getContainerMock();
         $container->shouldReceive('objectExists')->andReturn(false);
@@ -84,16 +92,16 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $this->assertFalse($adapter->has('filename.ext'));
     }
 
-    public function testWrite()
+    public function testWrite(): void
     {
         $container = $this->getContainerMock();
         $dataObject = $this->getDataObjectMock('filename.ext');
         $container->shouldReceive('uploadObject')->with('filename.ext', 'content', [])->andReturn($dataObject);
         $adapter = new Rackspace($container);
-        $this->assertInternalType('array', $adapter->write('filename.ext', 'content', new Config()));
+        $this->assertIsArray($adapter->write('filename.ext', 'content', new Config()));
     }
 
-    public function testWriteWithHeaders()
+    public function testWriteWithHeaders(): void
     {
         $container = $this->getContainerMock();
         $dataObject = $this->getDataObjectMock('filename.ext');
@@ -101,10 +109,10 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $container->shouldReceive('uploadObject')->with('filename.ext', 'content', $headers)->andReturn($dataObject);
         $adapter = new Rackspace($container);
         $config = new Config(['headers' => $headers]);
-        $this->assertInternalType('array', $adapter->write('filename.ext', 'content', $config));
+        $this->assertIsArray($adapter->write('filename.ext', 'content', $config));
     }
 
-    public function testWriteStream()
+    public function testWriteStream(): void
     {
         $container = $this->getContainerMock();
         $dataObject = $this->getDataObjectMock('filename.ext');
@@ -113,11 +121,11 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $config = new Config([]);
         $stream = tmpfile();
         fwrite($stream, 'something');
-        $this->assertInternalType('array', $adapter->writeStream('filename.ext', $stream, $config));
+        $this->assertIsArray($adapter->writeStream('filename.ext', $stream, $config));
         fclose($stream);
     }
 
-    public function testUpdateFail()
+    public function testUpdateFail(): void
     {
         $container = $this->getContainerMock();
         $dataObject = Mockery::mock('OpenCloud\ObjectStore\Resource\DataObject');
@@ -130,7 +138,7 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $this->assertFalse($adapter->update('filename.ext', 'content', new Config()));
     }
 
-    public function testUpdate()
+    public function testUpdate(): void
     {
         $container = $this->getContainerMock();
         $dataObject = $this->getDataObjectMock('filename.ext');
@@ -139,10 +147,10 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $dataObject->shouldReceive('update')->andReturn(Mockery::self());
         $container->shouldReceive('getObject')->andReturn($dataObject);
         $adapter = new Rackspace($container);
-        $this->assertInternalType('array', $adapter->update('filename.ext', 'content', new Config()));
+        $this->assertIsArray($adapter->update('filename.ext', 'content', new Config()));
     }
 
-    public function testUpdateStream()
+    public function testUpdateStream(): void
     {
         $container = $this->getContainerMock();
         $dataObject = $this->getDataObjectMock('filename.ext');
@@ -152,11 +160,11 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $container->shouldReceive('getObject')->andReturn($dataObject);
         $adapter = new Rackspace($container);
         $resource = tmpfile();
-        $this->assertInternalType('array', $adapter->updateStream('filename.ext', $resource, new Config()));
+        $this->assertIsArray($adapter->updateStream('filename.ext', $resource, new Config()));
         fclose($resource);
     }
 
-    public function testCreateDir()
+    public function testCreateDir(): void
     {
         $container = $this->getContainerMock();
         $dataObject = $this->getDataObjectMock('dirname');
@@ -168,11 +176,11 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
 
         $adapter = new Rackspace($container);
         $response = $adapter->createDir('dirname', new Config());
-        $this->assertInternalType('array', $response);
+        $this->assertIsArray($response);
         $this->assertEquals('dirname', $response['path']);
     }
 
-    public function getterProvider()
+    public function getterProvider(): array
     {
         return [
             ['getTimestamp'],
@@ -182,18 +190,19 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider  getterProvider
+     * @dataProvider getterProvider
+     * @param string $functionName
      */
-    public function testGetters($function)
+    public function testGetters(string $functionName): void
     {
         $container = $this->getContainerMock();
         $dataObject = $this->getDataObjectMock('filename.ext');
         $container->shouldReceive('getPartialObject')->andReturn($dataObject);
         $adapter = new Rackspace($container);
-        $this->assertInternalType('array', $adapter->{$function}('filename.ext'));
+        $this->assertIsArray($adapter->{$functionName}('filename.ext'));
     }
 
-    public function testDelete()
+    public function testDelete(): void
     {
         $container = $this->getContainerMock();
         $container->shouldReceive('deleteObject');
@@ -201,7 +210,7 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $this->assertTrue($adapter->delete('filename.ext'));
     }
 
-    public function testDeleteNotFound()
+    public function testDeleteNotFound(): void
     {
         $container = $this->getContainerMock();
         $container->shouldReceive('deleteObject')->andThrow('Guzzle\Http\Exception\BadResponseException');
@@ -209,7 +218,7 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $this->assertFalse($adapter->delete('filename.txt'));
     }
 
-    public function renameProvider()
+    public function renameProvider(): array
     {
         return [
             [201, true],
@@ -218,9 +227,11 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider  renameProvider
+     * @dataProvider renameProvider
+     * @param int $status
+     * @param string $expected
      */
-    public function testRename($status, $expected)
+    public function testRename(int $status, bool $expected): void
     {
         $container = $this->getContainerMock();
         $container->shouldReceive('getName')->andReturn('container_name');
@@ -237,7 +248,7 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $adapter->rename('filename.ext', 'other.ext'));
     }
 
-    public function deleteDirProvider()
+    public function deleteDirProvider(): array
     {
         return [
             [200, true],
@@ -246,9 +257,11 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider  deleteDirProvider
+     * @dataProvider deleteDirProvider
+     * @param int $status
+     * @param string $expected
      */
-    public function testDeleteDir($status, $expected)
+    public function testDeleteDir(int $status, bool $expected): void
     {
         $container = $this->getContainerMock();
         $container->shouldReceive('getName')->andReturn('container_name');
@@ -262,17 +275,17 @@ class RackspaceTests extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $adapter->deleteDir(''));
     }
 
-    public function testListContents()
+    public function testListContents(): void
     {
         $container = $this->getContainerMock();
         $container->shouldReceive('getName')->andReturn('container_name');
         $dataObject = $this->getDataObjectMock('filename.ext');
         $container->shouldReceive('objectList')->andReturn(new ArrayIterator([$dataObject]), new ArrayIterator());
         $adapter = new Rackspace($container);
-        $this->assertInternalType('array', $adapter->listContents('', true));
+        $this->assertIsArray($adapter->listContents('', true));
     }
 
-    public function testGetContainer()
+    public function testGetContainer(): void
     {
         $container = $this->getContainerMock();
         $adapter = new Rackspace($container);
