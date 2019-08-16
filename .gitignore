@@ -5,3 +5,4 @@ coverage
 coverage.xml
 tests/files
 .phpunit.result.cache
+.php_cs.cache
