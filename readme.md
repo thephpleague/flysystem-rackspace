@@ -18,18 +18,36 @@ composer require league/flysystem-rackspace
 ## Usage
 
 ```php
-use OpenCloud\OpenStack;
-use OpenCloud\Rackspace;
+use GuzzleHttp\Client;
+use GuzzleHttp\HandlerStack;
 use League\Flysystem\Filesystem;
-use League\Flysystem\Rackspace\RackspaceAdapter as Adapter;
+use League\Flysystem\Rackspace\RackspaceAdapter;
+use OpenStack\Common\Transport\Utils as TransportUtils;
+use OpenStack\Identity\v2\Service;
+use OpenStack\ObjectStore\v1\Models\Container;
+use OpenStack\OpenStack;
 
-$client = new Rackspace(Rackspace::UK_IDENTITY_ENDPOINT, array(
-    'username' => ':username',
-    'apiKey' => ':password',
-));
+$httpClient = new Client([
+    'base_uri' => TransportUtils::normalizeUrl(':endpoint'),
+    'handler'  => HandlerStack::create(),
+]);
 
-$store = $client->objectStoreService('cloudFiles', 'LON');
-$container = $store->getContainer('flysystem');
+$options = [
+    'authUrl'         => ':endpoint',
+    'region'          => ':region',
+    'username'        => ':username',
+    'password'        => ':password',
+    'tenantId'        => ':tenantId',
+    'identityService' => Service::factory($httpClient),
+];
+
+$client = new OpenStack($options);
+
+$objectStoreOptions = ['catalogName' => 'cloudFiles'];
+
+$store = $client->objectStoreV1($objectStoreOptions);
+
+$container = $store->getContainer(':container']);
 
 $filesystem = new Filesystem(new Adapter($container));
 ```

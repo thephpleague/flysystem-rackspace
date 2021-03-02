@@ -1,96 +1,69 @@
 <?php
 
+declare(strict_types=1);
+
 namespace League\Flysystem\Rackspace;
 
-use Guzzle\Http\Exception\BadResponseException;
-use Guzzle\Http\Exception\ClientErrorResponseException;
+use Exception;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
 use League\Flysystem\Adapter\Polyfill\StreamedCopyTrait;
 use League\Flysystem\Config;
 use League\Flysystem\Util;
-use OpenCloud\ObjectStore\Resource\Container;
-use OpenCloud\ObjectStore\Resource\DataObject;
+use OpenStack\Common\Error\BadResponseError;
+use OpenStack\ObjectStore\v1\Models\Container;
+use OpenStack\ObjectStore\v1\Models\StorageObject;
+use Throwable;
 
-class RackspaceAdapter extends AbstractAdapter
+final class RackspaceAdapter extends AbstractAdapter
 {
     use StreamedCopyTrait;
     use NotSupportingVisibilityTrait;
 
-    /**
-     * @var Container
-     */
-    protected $container;
+    private $container;
 
-    /**
-     * @var string
-     */
-    protected $prefix;
+    private $prefix;
 
-    /**
-     * Constructor.
-     *
-     * @param Container $container
-     * @param string    $prefix
-     */
-    public function __construct(Container $container, $prefix = null)
+    public function __construct(Container $container, string $prefix = '')
     {
         $this->setPathPrefix($prefix);
 
         $this->container = $container;
     }
 
-    /**
-     * Get the container.
-     *
-     * @return Container
-     */
-    public function getContainer()
+    public function getContainer(): Container
     {
         return $this->container;
     }
 
-    /**
-     * Get an object.
-     *
-     * @param string $path
-     *
-     * @return DataObject
-     */
-    protected function getObject($path)
+    protected function getObject(string $path): StorageObject
     {
         $location = $this->applyPathPrefix($path);
 
         return $this->container->getObject($location);
     }
 
-    /**
-     * Get the metadata of an object.
-     *
-     * @param string $path
-     *
-     * @return DataObject
-     */
-    protected function getPartialObject($path)
+    protected function getPartialObject(string $path): StorageObject
     {
         $location = $this->applyPathPrefix($path);
 
-        return $this->container->getPartialObject($location);
+        return $this->container->getObject($location);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function write($path, $contents, Config $config)
     {
         $location = $this->applyPathPrefix($path);
         $headers = [];
 
         if ($config && $config->has('headers')) {
-            $headers =  $config->get('headers');
+            $headers = $config->get('headers');
         }
 
-        $response = $this->container->uploadObject($location, $contents, $headers);
+        $response = $this->container->createObject([
+            'name' => $location,
+            'content' => $contents,
+            'headers' => $headers,
+        ]);
 
         return $this->normalizeObject($response);
     }
@@ -105,7 +78,7 @@ class RackspaceAdapter extends AbstractAdapter
         $object->setEtag(null);
         $response = $object->update();
 
-        if (! $response->getLastModified()) {
+        if (!$response->lastModified) {
             return false;
         }
 
@@ -119,10 +92,10 @@ class RackspaceAdapter extends AbstractAdapter
     {
         $object = $this->getObject($path);
         $newlocation = $this->applyPathPrefix($newpath);
-        $destination = '/'.$this->container->getName().'/'.ltrim($newlocation, '/');
-        $response = $object->copy($destination);
-
-        if ($response->getStatusCode() !== 201) {
+        $destination = sprintf('/%s/%s', $this->container->name, ltrim($newlocation, '/'));
+        try {
+            $object->copy(['destination' => $destination]);
+        } catch (Throwable $exception) {
             return false;
         }
 
@@ -139,8 +112,8 @@ class RackspaceAdapter extends AbstractAdapter
         try {
             $location = $this->applyPathPrefix($path);
 
-            $this->container->deleteObject($location);
-        } catch (BadResponseException $exception) {
+            $this->container->getObject($location)->delete();
+        } catch (Throwable $exception) {
             return false;
         }
 
@@ -152,23 +125,19 @@ class RackspaceAdapter extends AbstractAdapter
      */
     public function deleteDir($dirname)
     {
-        $paths = [];
-        $prefix = '/'.$this->container->getName().'/';
         $location = $this->applyPathPrefix($dirname);
-        $objects = $this->container->objectList(['prefix' => $location]);
+        $objects = $this->container->listObjects(['prefix' => $location]);
 
-        foreach ($objects as $object) {
-            $paths[] = $prefix.ltrim($object->getName(), '/');
+        try {
+            foreach ($objects as $object) {
+                /* @var $object StorageObject */
+                $object->delete();
+            }
+        } catch (Throwable $exception) {
+            return false;
         }
 
-        $service = $this->container->getService();
-        $response =  $service->bulkDelete($paths);
-
-        if ($response->getStatusCode() === 200) {
-            return true;
-        }
-
-        return false;
+        return true;
     }
 
     /**
@@ -208,7 +177,7 @@ class RackspaceAdapter extends AbstractAdapter
         try {
             $location = $this->applyPathPrefix($path);
             $exists = $this->container->objectExists($location);
-        } catch (ClientErrorResponseException $e) {
+        } catch (BadResponseError | Exception $exception) {
             return false;
         }
 
@@ -222,7 +191,10 @@ class RackspaceAdapter extends AbstractAdapter
     {
         $object = $this->getObject($path);
         $data = $this->normalizeObject($object);
-        $data['contents'] = (string) $object->getContent();
+
+        $stream = $object->download();
+        $data['contents'] = $stream->read($object->contentLength);
+        $stream->close();
 
         return $data;
     }
@@ -233,13 +205,10 @@ class RackspaceAdapter extends AbstractAdapter
     public function readStream($path)
     {
         $object = $this->getObject($path);
-        $data = $this->normalizeObject($object);
-        $responseBody = $object->getContent();
+        $responseBody = $object->download();
         $responseBody->rewind();
-        $data['stream'] = $responseBody->getStream();
-        $responseBody->detachStream();
 
-        return $data;
+        return ['stream' => $responseBody->detach()];
     }
 
     /**
@@ -251,15 +220,14 @@ class RackspaceAdapter extends AbstractAdapter
         $marker = null;
         $location = $this->applyPathPrefix($directory);
 
-        while(true) {
-            $objectList = $this->container->objectList(['prefix' => $location, 'marker' => $marker]);
-
-            if ($objectList->count() === 0) {
+        while (true) {
+            $objectList = $this->container->listObjects(['prefix' => $location, 'marker' => $marker]);
+            if (null === $objectList->current()) {
                 break;
             }
 
             $response = array_merge($response, iterator_to_array($objectList));
-            $marker = end($response)->getName();
+            $marker = end($response)->name;
         }
 
         return Util::emulateDirectories(array_map([$this, 'normalizeObject'], $response));
@@ -268,19 +236,21 @@ class RackspaceAdapter extends AbstractAdapter
     /**
      * {@inheritdoc}
      */
-    protected function normalizeObject(DataObject $object)
+    protected function normalizeObject(StorageObject $object)
     {
-        $name = $object->getName();
+        $name = $object->name;
         $name = $this->removePathPrefix($name);
-        $mimetype = explode('; ', $object->getContentType());
+        $mimetype = explode('; ', $object->contentType);
+
+        $lastModified = new \DateTime($object->lastModified);
 
         return [
-            'type'      => ((in_array('application/directory', $mimetype)) ? 'dir' : 'file'),
-            'dirname'   => Util::dirname($name),
-            'path'      => $name,
-            'timestamp' => strtotime($object->getLastModified()),
-            'mimetype'  => reset($mimetype),
-            'size'      => $object->getContentLength(),
+            'type' => ((in_array('application/directory', $mimetype)) ? 'dir' : 'file'),
+            'dirname' => Util::dirname($name),
+            'path' => $name,
+            'timestamp' => $lastModified->getTimestamp(),
+            'mimetype' => reset($mimetype),
+            'size' => $object->contentLength,
         ];
     }
 
@@ -323,12 +293,10 @@ class RackspaceAdapter extends AbstractAdapter
      *
      * @return string
      */
-    public function applyPathPrefix($path)
+    public function applyPathPrefix($path): string
     {
         $encodedPath = join('/', array_map('rawurlencode', explode('/', $path)));
 
         return parent::applyPathPrefix($encodedPath);
     }
-
-
 }
