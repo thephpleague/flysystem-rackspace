@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace League\Flysystem\Rackspace;
 
 use Exception;
+use GuzzleHttp\Psr7\Utils;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
 use League\Flysystem\Adapter\Polyfill\StreamedCopyTrait;
@@ -53,11 +54,7 @@ final class RackspaceAdapter extends AbstractAdapter
     public function write($path, $contents, Config $config)
     {
         $location = $this->applyPathPrefix($path);
-        $headers = [];
-
-        if ($config && $config->has('headers')) {
-            $headers = $config->get('headers');
-        }
+        $headers = $config->get('headers', []);
 
         $response = $this->container->createObject([
             'name' => $location,
@@ -158,7 +155,16 @@ final class RackspaceAdapter extends AbstractAdapter
      */
     public function writeStream($path, $resource, Config $config)
     {
-        return $this->write($path, $resource, $config);
+        $location = $this->applyPathPrefix($path);
+        $headers = $config->get('headers', []);
+
+        $response = $this->container->createObject([
+            'name' => $location,
+            'stream' => Utils::streamFor($resource),
+            'headers' => $headers,
+        ]);
+
+        return $this->normalizeObject($response);
     }
 
     /**
@@ -246,7 +252,7 @@ final class RackspaceAdapter extends AbstractAdapter
             'type' => ((in_array('application/directory', $mimetype)) ? 'dir' : 'file'),
             'dirname' => Util::dirname($name),
             'path' => $name,
-            'timestamp' => $object->lastModified->getTimestamp(),
+            'timestamp' => $object->lastModified,
             'mimetype' => reset($mimetype),
             'size' => $object->contentLength,
         ];
