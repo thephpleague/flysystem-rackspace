@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+$finder = PhpCsFixer\Finder::create()
+    ->in('src')
+;
+return PhpCsFixer\Config::create()
+    ->setRules([
+        '@Symfony' => true,
+        'array_syntax' => ['syntax' => 'short'],
+        'declare_strict_types' => true,
+        'void_return' => true,
+    ])
+    ->setCacheFile('.php_cs.cache')
+    ->setUsingCache(true)
+    ->setRiskyAllowed(true)
+    ->setFinder($finder);
