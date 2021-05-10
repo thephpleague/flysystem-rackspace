@@ -294,8 +294,6 @@ final class RackspaceAdapter extends AbstractAdapter
 
     /**
      * @param string $path
-     *
-     * @return string
      */
     public function applyPathPrefix($path): string
     {
